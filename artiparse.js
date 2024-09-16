@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -84,17 +84,17 @@
     <select id="mainStatType">
       <option value="">Any</option>
       <option value="atk">Attack</option>
+      <option value="atkp">Attack_Percent</option>
       <option value="hp">HP</option>
+      <option value="hpp">HP_Percent</option>
+      <option value="dbl">DoubleDamageChance</option>
+      <option value="addchance">AdditionalRoundChance</option>
       <option value="crit">CritChance</option>
-      <option value="acc">Accuracy</option>
       <option value="critdmg">CritDamage</option>
+      <option value="acc">Accuracy</option>
       <option value="spd">Speed</option>
       <option value="heal">HealingPerRound</option>
       <option value="dmgrange">DamageRange</option>
-      <option value="dbl">DoubleDamageChance</option>
-      <option value="addchance">AdditionalRoundChance</option>
-      <option value="atkp">Attack_Percent</option>
-      <option value="hpp">HP_Percent</option>
       <option value="eva">Evasion</option>
       <option value="dmgred">DamageReduction</option>
       <option value="defpen">DefencePenetration</option>
@@ -111,17 +111,17 @@
     <label for="substats">Substats:</label>
     <select id="substats" multiple size="10">
       <option value="atk">Attack</option>
+      <option value="atkp">Attack_Percent</option>
       <option value="hp">HP</option>
+      <option value="hpp">HP_Percent</option>
+      <option value="dbl">DoubleDamageChance</option>
+      <option value="addchance">AdditionalRoundChance</option>
       <option value="crit">CritChance</option>
-      <option value="acc">Accuracy</option>
       <option value="critdmg">CritDamage</option>
+      <option value="acc">Accuracy</option>
       <option value="spd">Speed</option>
       <option value="heal">HealingPerRound</option>
       <option value="dmgrange">DamageRange</option>
-      <option value="dbl">DoubleDamageChance</option>
-      <option value="addchance">AdditionalRoundChance</option>
-      <option value="atkp">Attack_Percent</option>
-      <option value="hpp">HP_Percent</option>
       <option value="eva">Evasion</option>
       <option value="dmgred">DamageReduction</option>
       <option value="defpen">DefencePenetration</option>
