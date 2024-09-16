@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
-// @description  Injects a custom filter UI into the inventory page on Nattobot and makes it draggable
+// @version      1.0.1
+// @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/Hyrulien/repo/main/
-// @downloadURL  https://raw.githubusercontent.com/Hyrulien/repo/main/
+// @updateURL    https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
+// @downloadURL  https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
 // ==/UserScript==
 
 
