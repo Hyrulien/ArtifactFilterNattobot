@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.0.3
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -13,7 +13,7 @@
 
 (function() {
 
-    function checkURL() {
+  function checkURL() {
     return window.location.hash === '#artifacts';
   }
 
@@ -61,6 +61,13 @@
   panel.innerHTML = `
     <button class="close-btn">X</button>
     <h3>Filter Artifacts</h3>
+    <label for="setType">Set Type:</label>
+    <select id="setType">
+      <option value="">Any</option>
+      <option value="power">Power Set</option>
+      <option value="blacklion">Black Lion Set</option>
+      <option value="holy">Holy Set</option>
+    </select>
     <label for="slot">Slot:</label>
     <select id="slot">
       <option value="">Any</option>
@@ -173,11 +180,19 @@
     8: 'ea'               // Earrings
   };
 
+  // Define set mappings for ArtifactID
+  const setMappings = {
+    power: [17, 18, 19, 20, 21, 22, 23, 24],
+    blacklion: [1, 2, 3, 4, 5, 6, 7, 8],
+    holy: [9, 10, 11, 12, 13, 14, 15, 16]
+  };
+
   // Filter items based on user input
   function filterItems({
     slot = null,
     mainStatType = null,
-    substats = []
+    substats = [],
+    setType = null
   } = {}) {
     // Convert custom names to actual values
     slot = Object.keys(slotMappings).find(key => slotMappings[key] === slot) || slot;
@@ -185,6 +200,8 @@
 
     mainStatType = bindings[mainStatType] || mainStatType;
     substats = substats.map(stat => bindings[stat] || stat);
+
+    const setArtifactIDs = setType ? setMappings[setType] : null;
 
     // Select all item elements within the inventory
     var items = document.querySelectorAll('.inventory .item');
@@ -196,6 +213,7 @@
       var itemSlot = jsonData.Slot;
       var itemMainStatType = jsonData.MainStatType;
       var itemSubStats = jsonData.SubStats;
+      var itemArtifactID = jsonData.ArtifactID;
 
       var matchesSlot = slot === null || itemSlot == slot;
       var matchesMainStatType = mainStatType === null || itemMainStatType == mainStatType;
@@ -203,7 +221,10 @@
       // Ensure that all selected substats are present in the item's substats
       var matchesSubstats = substats.length === 0 || substats.every(substat => itemSubStats.includes(substat));
 
-      if (matchesSlot && matchesMainStatType && matchesSubstats) {
+      // Check if the item matches the selected set's ArtifactID
+      var matchesSet = setArtifactIDs === null || setArtifactIDs.includes(itemArtifactID);
+
+      if (matchesSlot && matchesMainStatType && matchesSubstats && matchesSet) {
         item.style.display = 'block'; // Show the item
       } else {
         item.style.display = 'none';  // Hide the item
@@ -230,11 +251,13 @@
     const slot = document.getElementById('slot').value;
     const mainStatType = document.getElementById('mainStatType').value;
     const substats = Array.from(document.getElementById('substats').selectedOptions).map(option => option.value);
+    const setType = document.getElementById('setType').value;
 
     filterItems({
       slot: slot || null,
       mainStatType: mainStatType || null,
-      substats
+      substats,
+      setType: setType || null
     });
   });
 
@@ -243,6 +266,7 @@
     document.getElementById('slot').value = '';
     document.getElementById('mainStatType').value = '';
     document.getElementById('substats').selectedIndex = -1;
+    document.getElementById('setType').value = '';
     filterItems(); // Reset filters
   });
 
@@ -253,7 +277,7 @@
   let startX, startY, startLeft, startTop;
 
   panelElement.addEventListener('mousedown', (e) => {
-    if (e.target !== panelElement) return; 
+    if (e.target !== panelElement) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -297,3 +321,4 @@
   // Reload UI when hash changes
   window.addEventListener('hashchange', loadUI);
 })();
+
