@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.4
+// @version      1.0.5
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -9,7 +9,6 @@
 // @updateURL    https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
 // @downloadURL  https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
 // ==/UserScript==
-
 
 (function() {
 
@@ -34,7 +33,8 @@
       transform: translate(0, 0); /* Start with no translation */
       user-select: none; /* Prevent text selection while dragging */
     }
-    #filter-panel .close-btn {
+    #filter-panel .close-btn,
+    #filter-panel .pin-btn {
       position: absolute;
       top: 5px;
       right: 5px;
@@ -44,6 +44,10 @@
       padding: 5px;
       cursor: pointer;
       z-index: 1001; /* Ensure it is above other elements */
+    }
+    #filter-panel .pin-btn {
+      background: #00ff00; /* Pin button color */
+      right: 50px; /* Position next to close button */
     }
     #filter-panel input, #filter-panel select {
       display: block;
@@ -60,6 +64,7 @@
   panel.id = 'filter-panel';
   panel.innerHTML = `
     <button class="close-btn">X</button>
+    <button class="pin-btn">Pin</button>
     <h3>Filter Artifacts</h3>
     <label for="setType">Set Type:</label>
     <select id="setType">
@@ -67,6 +72,12 @@
       <option value="power">Power Set</option>
       <option value="blacklion">Black Lion Set</option>
       <option value="holy">Holy Set</option>
+    </select>
+    <label for="level">Level:</label>
+    <select id="level">
+      <option value="">Any</option>
+      <option value="below50">Below Lvl 50</option>
+      <option value="above50">Above Lvl 50</option>
     </select>
     <label for="slot">Slot:</label>
     <select id="slot">
@@ -175,7 +186,7 @@
     3: 'gl',              // Gloves
     4: 'bo',              // Boots
     5: 'ne',              // Necklace
-    6: 'br',              // Bracelet
+     6: 'br',             // Bracelet
     7: 'ri',              // Ring
     8: 'ea'               // Earrings
   };
@@ -192,7 +203,8 @@
     slot = null,
     mainStatType = null,
     substats = [],
-    setType = null
+    setType = null,
+    level = null
   } = {}) {
     // Convert custom names to actual values
     slot = Object.keys(slotMappings).find(key => slotMappings[key] === slot) || slot;
@@ -214,6 +226,7 @@
       var itemMainStatType = jsonData.MainStatType;
       var itemSubStats = jsonData.SubStats;
       var itemArtifactID = jsonData.ArtifactID;
+      var itemLevel = jsonData.Level; // Assuming the level is included in the data-json
 
       var matchesSlot = slot === null || itemSlot == slot;
       var matchesMainStatType = mainStatType === null || itemMainStatType == mainStatType;
@@ -224,7 +237,15 @@
       // Check if the item matches the selected set's ArtifactID
       var matchesSet = setArtifactIDs === null || setArtifactIDs.includes(itemArtifactID);
 
-      if (matchesSlot && matchesMainStatType && matchesSubstats && matchesSet) {
+      // Check level filter
+      var matchesLevel = true;
+      if (level === 'below50') {
+        matchesLevel = itemLevel <= 50;
+      } else if (level === 'above50') {
+        matchesLevel = itemLevel > 50;
+      }
+
+      if (matchesSlot && matchesMainStatType && matchesSubstats && matchesSet && matchesLevel) {
         item.style.display = 'block'; // Show the item
       } else {
         item.style.display = 'none';  // Hide the item
@@ -252,12 +273,14 @@
     const mainStatType = document.getElementById('mainStatType').value;
     const substats = Array.from(document.getElementById('substats').selectedOptions).map(option => option.value);
     const setType = document.getElementById('setType').value;
+    const level = document.getElementById('level').value;
 
     filterItems({
       slot: slot || null,
       mainStatType: mainStatType || null,
       substats,
-      setType: setType || null
+      setType: setType || null,
+      level: level || null
     });
   });
 
@@ -270,6 +293,29 @@
     filterItems(); // Reset filters
   });
 
+  // Handle pin/unpin functionality
+  let isPinned = localStorage.getItem('filterPanelPinned') === 'true';
+
+  function updatePinButton() {
+    document.querySelector('#filter-panel .pin-btn').textContent = isPinned ? 'Unpin' : 'Pin';
+  }
+
+  function savePanelPosition() {
+    const panelElement = document.getElementById('filter-panel');
+    localStorage.setItem('filterPanelLeft', panelElement.style.left);
+    localStorage.setItem('filterPanelTop', panelElement.style.top);
+  }
+
+  function restorePanelPosition() {
+    const panelElement = document.getElementById('filter-panel');
+    const savedLeft = localStorage.getItem('filterPanelLeft');
+    const savedTop = localStorage.getItem('filterPanelTop');
+    if (savedLeft && savedTop) {
+      panelElement.style.left = savedLeft;
+      panelElement.style.top = savedTop;
+    }
+  }
+
   // Make the filter panel draggable
   const panelElement = document.getElementById('filter-panel');
 
@@ -277,7 +323,7 @@
   let startX, startY, startLeft, startTop;
 
   panelElement.addEventListener('mousedown', (e) => {
-    if (e.target !== panelElement) return;
+    if (e.target !== panelElement || isPinned) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -296,6 +342,7 @@
   }
 
   function onMouseUp() {
+    if (!isPinned) savePanelPosition();
     isDragging = false;
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
@@ -304,12 +351,25 @@
   // Handle close button click
   panelElement.querySelector('.close-btn').addEventListener('click', () => {
     document.body.removeChild(panelElement);
+    localStorage.removeItem('filterPanelLeft');
+    localStorage.removeItem('filterPanelTop');
   });
+
+  // Handle pin/unpin button click
+  document.querySelector('#filter-panel .pin-btn').addEventListener('click', () => {
+    isPinned = !isPinned;
+    localStorage.setItem('filterPanelPinned', isPinned);
+    updatePinButton();
+  });
+
+  // Initialize pin button text
+  updatePinButton();
+
   // Load the UI and make it draggable if URL contains #artifacts
   function loadUI() {
     if (checkURL()) {
       document.getElementById('filter-panel').style.display = '';
-      makeDraggable(document.getElementById('filter-panel'));
+      restorePanelPosition();
     } else {
       document.getElementById('filter-panel').style.display = 'none';
     }
@@ -321,4 +381,3 @@
   // Reload UI when hash changes
   window.addEventListener('hashchange', loadUI);
 })();
-
