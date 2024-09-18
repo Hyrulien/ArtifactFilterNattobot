@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.5
+// @version      1.0.6
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -18,46 +18,103 @@
 
   // Create a style element to style the UI
   const style = document.createElement('style');
-  style.textContent = `
-    #filter-panel {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      width: 200px; /* Revert to old size */
-      padding: 10px;
-      background: #fff;
-      border: 1px solid #ccc;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-      z-index: 1000;
-      cursor: move; /* Cursor to indicate draggable */
-      transform: translate(0, 0); /* Start with no translation */
-      user-select: none; /* Prevent text selection while dragging */
-    }
-    #filter-panel .close-btn,
-    #filter-panel .pin-btn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: #ff0000;
-      color: #fff;
-      border: none;
-      padding: 5px;
-      cursor: pointer;
-      z-index: 1001; /* Ensure it is above other elements */
-    }
-    #filter-panel .pin-btn {
-      background: #00ff00; /* Pin button color */
-      right: 50px; /* Position next to close button */
-    }
-    #filter-panel input, #filter-panel select {
-      display: block;
-      margin-bottom: 5px;
-    }
-    #filter-panel select {
-      width: 100%;
-    }
-  `;
-  document.head.appendChild(style);
+style.textContent = `
+  #filter-panel {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 250px;
+    padding: 15px;
+    background: linear-gradient(135deg, #e6e9f0 0%, #eef1f5 100%);
+    border-radius: 8px;
+    border: 1px solid #b0bec5;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    cursor: move;
+    transform: translate(0, 0);
+    font-family: 'Arial', sans-serif;
+    user-select: none;
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  #filter-panel:hover {
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  #filter-panel .close-btn,
+  #filter-panel .pin-btn {
+    position: absolute;
+    top: 10px;
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  #filter-panel .close-btn {
+    right: 10px;
+    background-color: #e74c3c;
+  }
+  #filter-panel .close-btn:hover {
+    background-color: #c0392b;
+  }
+  #filter-panel .pin-btn {
+    right: 50px;
+    background-color: #2ecc71;
+  }
+  #filter-panel .pin-btn:hover {
+    background-color: #27ae60;
+  }
+  #filter-panel h3 {
+    margin-bottom: 10px;
+    color: #37474f;
+    font-size: 18px;
+    text-align: center;
+  }
+  #filter-panel label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: #546e7a;
+  }
+  #filter-panel select,
+  #filter-panel button {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #b0bec5;
+    background: #f5f5f5;
+    color: #37474f;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+  #filter-panel select:focus,
+  #filter-panel button:focus {
+    border-color: #1e88e5;
+    outline: none;
+  }
+  #apply-filters, #reset-filters {
+    background-color: #f5f5f5;
+    color: #37474f;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+  }
+  #apply-filters:hover {
+    background-color: #007bff;
+    color: white;
+  }
+  #reset-filters:hover {
+    background-color: #ff6b6b;
+    color: white;
+  }
+`;
+document.head.appendChild(style);
+
 
   // Create the UI panel
   const panel = document.createElement('div');
@@ -297,7 +354,7 @@
   let isPinned = localStorage.getItem('filterPanelPinned') === 'true';
 
   function updatePinButton() {
-    document.querySelector('#filter-panel .pin-btn').textContent = isPinned ? 'Unpin' : 'Pin';
+    document.querySelector('#filter-panel .pin-btn').textContent = isPinned ? 'Pin' : 'Pin';
   }
 
   function savePanelPosition() {
