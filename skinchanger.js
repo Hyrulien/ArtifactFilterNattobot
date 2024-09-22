@@ -396,7 +396,7 @@ document.querySelector('#reset-skin').onclick = () => {
         localStorage.clear(); // Clear the entire localStorage
     }
 
-    location.reload(); 
+    location.reload();
 };
 
 
