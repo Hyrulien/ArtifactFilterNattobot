@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.4
+// @version      1.0.2
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -146,7 +146,8 @@
         <input type="text" id="currency-image" placeholder="Enter New image URL">
         <label for="currency-description">Change Item Description</label>
         <input type="text" id="currency-description" placeholder="Enter New Item description">
-
+        <label for="text-color">Text Color (Hex)</label>
+        <input type="text" id="text-color" placeholder="e.g. #ff5733">
       </div>
       <button id="apply-skin">Apply Skin</button>
       <button id="reset-skin">Reset</button>
@@ -170,69 +171,67 @@ document.addEventListener('keypress', (e) => {
 
 togglePanelVisibility();
 
+const loadSavedSettings = () => {
+    const position = JSON.parse(localStorage.getItem('skinchangerPosition'));
+    if (position) {
+        panel.style.top = position.top || '10px';
+        panel.style.left = position.left || '10px';
+    }
 
-    const loadSavedSettings = () => {
-        const position = JSON.parse(localStorage.getItem('skinchangerPosition'));
-        if (position) {
-            panel.style.top = position.top;
-            panel.style.left = position.left;
-        }
+    const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
+    const currencyElements = document.querySelectorAll('.card_currency');
 
-        const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
-        for (const currency in appliedSkins) {
-            const currencyElement = Array.from(document.querySelectorAll('.card_currency')).find(card =>
-                card.querySelector('img')?.alt.includes(currency)
-            );
-            if (currencyElement) {
-                const { borderUrl, backgroundUrl, currencyNameChange, currencyImage, currencyDescription, currencyAlt } = appliedSkins[currency];
-                if (borderUrl) {
-                    currencyElement.style.backgroundImage = `url(${borderUrl})`;
-                }
-                if (backgroundUrl) {
-                    const videoElem = document.createElement('video');
-                    videoElem.src = backgroundUrl;
-                    videoElem.autoplay = true;
-                    videoElem.muted = true;
-                    videoElem.loop = true;
-                    videoElem.style.position = 'absolute';
-                    videoElem.style.right = '6px';
-                    videoElem.style.bottom = '4px';
-                    videoElem.style.width = 'calc(100% - 10px)';
-                    videoElem.style.height = 'calc(100% - 7px)';
-                    videoElem.style.zIndex = '-1';
-                    videoElem.style.objectFit = 'fill';
-                    videoElem.style.objectPosition = 'center';
-                    currencyElement.prepend(videoElem);
-                }
-                if (currencyNameChange) {
-                    const NameChangeElement = currencyElement.querySelector('h4');
-                    if (NameChangeElement) {
-                        NameChangeElement.textContent = currencyNameChange;
-                    }
-                }
-                if (currencyImage) {
-                    const imgElement = currencyElement.querySelector('img');
-                    if (imgElement) {
-                        imgElement.src = currencyImage; 
-                        imgElement.setAttribute('data-src', currencyImage); 
-                    }
-                }
+    for (const key in appliedSkins) {
+        const [baseName, identifier] = key.split('#');
+        const currencyElement = Array.from(currencyElements).find(card => {
+            const img = card.querySelector('img');
+            return img && img.alt.includes(baseName.trim()) && (identifier ? img.alt.includes(identifier) : true);
+        });
 
-                if (currencyDescription) {
-                    const descriptionElement = currencyElement.querySelector('p');
-                    if (descriptionElement) {
-                        descriptionElement.textContent = currencyDescription;
-                    }
-                }
-                if (currencyAlt) {
-                    const imgElement = currencyElement.querySelector('img');
-                    if (imgElement) {
-                        imgElement.alt = currencyAlt;
-                    }
-                }
+        if (currencyElement) {
+            const { borderUrl, backgroundUrl, currencyNameChange, currencyImage, currencyDescription, textColor } = appliedSkins[key];
+
+            // Apply the loaded settings to the currencyElement
+            if (borderUrl) {
+                currencyElement.style.backgroundImage = `url(${borderUrl})`;
             }
+            if (backgroundUrl) {
+                const videoElem = document.createElement('video');
+                videoElem.src = backgroundUrl;
+                videoElem.autoplay = true;
+                videoElem.muted = true;
+                videoElem.loop = true;
+                videoElem.style.position = 'absolute';
+                videoElem.style.right = '6px';
+                videoElem.style.bottom = '4px';
+                videoElem.style.width = 'calc(100% - 10px)';
+                videoElem.style.height = 'calc(100% - 7px)';
+                videoElem.style.zIndex = '-1';
+                videoElem.style.objectFit = 'fill';
+                videoElem.style.objectPosition = 'center';
+                currencyElement.prepend(videoElem);
+            }
+            if (currencyNameChange) {
+                const nameElement = currencyElement.querySelector('h4');
+                if (nameElement) nameElement.textContent = currencyNameChange;
+            }
+            if (currencyImage) {
+                const imgElement = currencyElement.querySelector('img');
+                if (imgElement) imgElement.src = currencyImage;
+            }
+            if (currencyDescription) {
+                const descriptionElement = currencyElement.querySelector('p');
+                if (descriptionElement) descriptionElement.textContent = currencyDescription;
+            }
+            if (textColor) {
+                const h4Element = currencyElement.querySelector('h4');
+                const pElement = currencyElement.querySelector('p');
+                if (h4Element) h4Element.style.color = textColor;
+                if (pElement) pElement.style.color = textColor;
         }
-    };
+      }
+    }
+};
 
     loadSavedSettings();
 
@@ -285,31 +284,25 @@ togglePanelVisibility();
 
 const applySkin = () => {
     const currencyName = document.getElementById('currency-name').value.trim();
-    const currencyNumber = currencyName.match(/\d+/); 
-    const baseName = currencyName.replace(/\d+$/, '').trim(); 
+    const currencyNumber = currencyName.match(/\d+/);
+    const baseName = currencyName.replace(/\d+$/, '').trim();
     const borderUrl = document.getElementById('border-url').value;
     const backgroundUrl = document.getElementById('background-url').value;
     const currencyNameChange = document.getElementById('currency-namechange').value;
     const currencyImage = document.getElementById('currency-image').value;
     const currencyDescription = document.getElementById('currency-description').value;
-
+    const textColor = document.getElementById('text-color').value;
 
     const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
     const currency = currencyName.trim();
     if (!currency) return;
 
-
     const isPlushiesActive = window.location.hash === '#plushies';
-
-
     const currencyElements = document.querySelectorAll('.card_currency');
-
 
     const applicableElements = Array.from(currencyElements).filter(card => {
         const img = card.querySelector('img');
         const isCorrectPage = isPlushiesActive ? card.closest('#plushies') : card.closest('#currencies');
-
-
         const normalizedAlt = img.alt.replace(/\s+/g, '');
         const normalizedInput = baseName.replace(/\s+/g, '');
 
@@ -328,15 +321,18 @@ const applySkin = () => {
     }
 
     if (currencyElement) {
-        appliedSkins[currency] = {
+        // Save the skin with both base name and identifier
+        const saveKey = `${baseName}#${currencyNumber ? currencyNumber[0] : ''}`;
+        appliedSkins[saveKey] = {
             borderUrl,
             backgroundUrl,
             currencyNameChange,
             currencyImage,
             currencyDescription,
-
+            textColor,
         };
 
+        localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins));
         localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins));
 
         if (borderUrl) {
@@ -376,6 +372,13 @@ const applySkin = () => {
                 descriptionElement.textContent = currencyDescription;
             }
         }
+        if (textColor) {
+    const h4Element = currencyElement.querySelector('h4');
+    const pElement = currencyElement.querySelector('p');
+    if (h4Element) h4Element.style.color = textColor;
+    if (pElement) pElement.style.color = textColor;
+}
+
 
     }
 };
@@ -384,20 +387,45 @@ document.getElementById('apply-skin').onclick = applySkin;
 
 
 
-// reset button logic
+
+// Reset button logic
 document.querySelector('#reset-skin').onclick = () => {
     const resetCurrencyName = document.getElementById('currency-name').value.trim();
     const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
 
     if (resetCurrencyName) {
-        delete appliedSkins[resetCurrencyName]; // Remove the specific item skin
-        localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins)); // Update localStorage
+        const currencyNumber = resetCurrencyName.match(/\d+/);
+        const baseName = resetCurrencyName.replace(/\d*$/, '').trim();
+        const saveKey = `${baseName}#${currencyNumber ? currencyNumber[0] : ''}`;
+
+        // Check if the skin exists before deleting
+        if (appliedSkins[saveKey]) {
+            delete appliedSkins[saveKey]; // Remove the specific item skin
+            localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins)); // Update localStorage
+
+            // Reset the UI for the specific item
+            const currencyElements = document.querySelectorAll('.card_currency');
+            Array.from(currencyElements).forEach(card => {
+                const img = card.querySelector('img');
+                if (img && img.alt.includes(baseName)) {
+                    // Reset background image and other properties
+                    card.style.backgroundImage = ''; // Reset background
+                    const nameElement = card.querySelector('h4');
+                    if (nameElement) nameElement.textContent = baseName; // Reset name to baseName
+                    const descriptionElement = card.querySelector('p');
+                    if (descriptionElement) descriptionElement.textContent = ''; // Reset description
+
+                }
+            });
+        }
     } else {
         localStorage.clear(); // Clear the entire localStorage
     }
 
+
     location.reload();
 };
+
 
 
     window.addEventListener('hashchange', togglePanelVisibility);
