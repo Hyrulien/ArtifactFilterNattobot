@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -163,7 +163,7 @@ const togglePanelVisibility = () => {
 
 // Keypress functionality to hide/unhide the panel
 document.addEventListener('keypress', (e) => {
-    if (e.key === '§') { // Change 'h' to whatever key you want to use
+    if (e.key === '§') { // Change '§' to whatever key you want to use
         panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
     }
 });
@@ -213,8 +213,8 @@ togglePanelVisibility();
                 if (currencyImage) {
                     const imgElement = currencyElement.querySelector('img');
                     if (imgElement) {
-                        imgElement.src = currencyImage; // Set the src
-                        imgElement.setAttribute('data-src', currencyImage); // Set the data-src
+                        imgElement.src = currencyImage; 
+                        imgElement.setAttribute('data-src', currencyImage);
                     }
                 }
 
@@ -285,8 +285,8 @@ togglePanelVisibility();
 
 const applySkin = () => {
     const currencyName = document.getElementById('currency-name').value.trim();
-    const currencyNumber = currencyName.match(/\d+/); // Extract any trailing numbers
-    const baseName = currencyName.replace(/\d+$/, '').trim(); // Base name without numbers
+    const currencyNumber = currencyName.match(/\d+/); 
+    const baseName = currencyName.replace(/\d+$/, '').trim(); 
     const borderUrl = document.getElementById('border-url').value;
     const backgroundUrl = document.getElementById('background-url').value;
     const currencyNameChange = document.getElementById('currency-namechange').value;
@@ -298,18 +298,18 @@ const applySkin = () => {
     const currency = currencyName.trim();
     if (!currency) return;
 
-    // Check if we're on the plushies or currencies page
+
     const isPlushiesActive = window.location.hash === '#plushies';
 
-    // Get all currency elements
+
     const currencyElements = document.querySelectorAll('.card_currency');
 
-    // Filter currency elements based on the active section
+
     const applicableElements = Array.from(currencyElements).filter(card => {
         const img = card.querySelector('img');
         const isCorrectPage = isPlushiesActive ? card.closest('#plushies') : card.closest('#currencies');
 
-        // Normalize the alt text by removing spaces
+
         const normalizedAlt = img.alt.replace(/\s+/g, '');
         const normalizedInput = baseName.replace(/\s+/g, '');
 
@@ -321,14 +321,12 @@ const applySkin = () => {
     if (currencyNumber && applicableElements.length > 0) {
         const index = parseInt(currencyNumber[0], 10) - 1; // Convert to zero-based index
         if (index >= 0 && index < applicableElements.length) {
-            currencyElement = applicableElements[index]; // Select the specific item
+            currencyElement = applicableElements[index]; 
         }
     } else {
-        currencyElement = applicableElements[0]; // Default to first item if no number is given
-    }
+        currencyElement = applicableElements[0]; 
 
     if (currencyElement) {
-        console.log('Applying skin to:', currencyElement.querySelector('img').alt); // Log the applied item
         appliedSkins[currency] = {
             borderUrl,
             backgroundUrl,
@@ -385,19 +383,19 @@ document.getElementById('apply-skin').onclick = applySkin;
 
 
 
-// Update your reset button logic
+// reset button logic
 document.querySelector('#reset-skin').onclick = () => {
     const resetCurrencyName = document.getElementById('currency-name').value.trim();
     const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
 
     if (resetCurrencyName) {
-        delete appliedSkins[resetCurrencyName]; // Remove the specific currency
+        delete appliedSkins[resetCurrencyName]; 
         localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins)); // Update localStorage
     } else {
         localStorage.clear(); // Clear the entire localStorage
     }
 
-    location.reload(); // Reload the page
+    location.reload(); 
 };
 
 
