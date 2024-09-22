@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
