@@ -214,7 +214,7 @@ togglePanelVisibility();
                     const imgElement = currencyElement.querySelector('img');
                     if (imgElement) {
                         imgElement.src = currencyImage; 
-                        imgElement.setAttribute('data-src', currencyImage);
+                        imgElement.setAttribute('data-src', currencyImage); 
                     }
                 }
 
@@ -319,12 +319,13 @@ const applySkin = () => {
     let currencyElement = null;
 
     if (currencyNumber && applicableElements.length > 0) {
-        const index = parseInt(currencyNumber[0], 10) - 1; // Convert to zero-based index
+        const index = parseInt(currencyNumber[0], 10) - 1;
         if (index >= 0 && index < applicableElements.length) {
-            currencyElement = applicableElements[index]; 
+            currencyElement = applicableElements[index];
         }
     } else {
-        currencyElement = applicableElements[0]; 
+        currencyElement = applicableElements[0];
+    }
 
     if (currencyElement) {
         appliedSkins[currency] = {
@@ -389,7 +390,7 @@ document.querySelector('#reset-skin').onclick = () => {
     const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
 
     if (resetCurrencyName) {
-        delete appliedSkins[resetCurrencyName]; 
+        delete appliedSkins[resetCurrencyName]; // Remove the specific item skin
         localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins)); // Update localStorage
     } else {
         localStorage.clear(); // Clear the entire localStorage
