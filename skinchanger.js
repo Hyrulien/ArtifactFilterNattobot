@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -215,10 +215,14 @@ const loadSavedSettings = () => {
                 const nameElement = currencyElement.querySelector('h4');
                 if (nameElement) nameElement.textContent = currencyNameChange;
             }
-            if (currencyImage) {
-                const imgElement = currencyElement.querySelector('img');
-                if (imgElement) imgElement.src = currencyImage;
-            }
+if (currencyImage) {
+    const imgElement = currencyElement.querySelector('img');
+    if (imgElement) {
+        imgElement.src = currencyImage;
+        imgElement.setAttribute('data-src', currencyImage);
+    }
+}
+
             if (currencyDescription) {
                 const descriptionElement = currencyElement.querySelector('p');
                 if (descriptionElement) descriptionElement.textContent = currencyDescription;
@@ -333,7 +337,6 @@ const applySkin = () => {
         };
 
         localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins));
-        localStorage.setItem('appliedSkins', JSON.stringify(appliedSkins));
 
         if (borderUrl) {
             currencyElement.style.backgroundImage = `url(${borderUrl})`;
@@ -360,12 +363,14 @@ const applySkin = () => {
                 NameChangeElement.textContent = currencyNameChange;
             }
         }
-        if (currencyImage) {
-            const imgElement = currencyElement.querySelector('img');
-            if (imgElement) {
-                imgElement.src = currencyImage;
-            }
-        }
+if (currencyImage) {
+    const imgElement = currencyElement.querySelector('img');
+    if (imgElement) {
+        imgElement.src = currencyImage;
+        imgElement.setAttribute('data-src', currencyImage);
+    }
+}
+
         if (currencyDescription) {
             const descriptionElement = currencyElement.querySelector('p');
             if (descriptionElement) {
