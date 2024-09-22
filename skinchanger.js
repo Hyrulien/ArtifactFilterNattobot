@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -103,7 +103,7 @@
         border-color: #1e88e5;
         outline: none;
       }
-      #apply-skin, #reset-skin {
+      #apply-skin, #reset-skin, #showSkinsButton {
         background-color: #f5f5f5;
         color: #37474f;
         font-weight: bold;
@@ -118,10 +118,76 @@
         background-color: #ff6b6b;
         color: white;
       }
+      #showSkinsButton:hover {
+        background-color: #ff6b6b;
+        color: white;
+      }
       .advanced-options {
         display: none; /* Initially hide advanced options */
         margin-top: 10px;
       }
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    user-select: text; /* Allow text selection */
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+}
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#skinDetails {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    user-select: text; /* Allow text selection */
+    cursor: text; /* Change cursor to text selection */
+}
+
+
+
     `;
     document.head.appendChild(style);
 
@@ -133,6 +199,14 @@
         <button class="close-btn">✖</button>
         <h3>Skinchanger</h3>
       </div>
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <pre id="skinDetails"></pre> <!-- Use <pre> for better formatting -->
+    </div>
+</div>
+
+
       <label for="currency-name">Item Name</label>
       <input type="text" id="currency-name" placeholder="e.g Black Cat Plush">
       <label for="border-url">Border URL (PNG/MP4)</label>
@@ -151,6 +225,7 @@
       </div>
       <button id="apply-skin">Apply Skin</button>
       <button id="reset-skin">Reset</button>
+      <button id="showSkinsButton">Show Applied Skins</button>
     `;
     document.body.appendChild(panel);
 
@@ -430,6 +505,57 @@ document.querySelector('#reset-skin').onclick = () => {
 
     location.reload();
 };
+
+document.getElementById('showSkinsButton').onclick = () => {
+    const currencyName = document.getElementById('currency-name').value.trim();
+    const currencyNumber = currencyName.match(/\d+/);
+    const baseName = currencyName.replace(/\d+$/, '').trim();
+
+    const appliedSkins = JSON.parse(localStorage.getItem('appliedSkins')) || {};
+
+    if (!currencyName) {
+        alert("Please enter a valid item name.");
+        return;
+    }
+
+    const saveKey = `${baseName}#${currencyNumber ? currencyNumber[0] : ''}`;
+    const skinDetails = document.getElementById('skinDetails');
+
+    if (appliedSkins[saveKey]) {
+        const skinData = appliedSkins[saveKey];
+        skinDetails.textContent = `
+            Applied Skin Data:
+            Border URL: ${skinData.borderUrl || "No border URL applied."}
+            Background URL: ${skinData.backgroundUrl || "No background URL applied."}
+            Name Change: ${skinData.currencyNameChange || "No name change applied."}
+            Image: ${skinData.currencyImage || "No image applied."}
+            Description: ${skinData.currencyDescription || "No description applied."}
+            Text Color: ${skinData.textColor || "No text color applied."}
+        `;
+
+        document.getElementById('myModal').style.display = "block";
+    } else {
+        alert("No applied skin found for this item. Please check the item name.");
+    }
+};
+
+// Close modal functionality
+document.querySelector('.close').onclick = () => {
+    document.getElementById('myModal').style.display = "none";
+};
+
+// Close modal when clicking outside of it
+window.onclick = (event) => {
+    const modal = document.getElementById('myModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+};
+
+
+
+
+
 
 
 
