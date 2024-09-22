@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Skin Changer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Injects a custom skinchanger UI into the currencies & plushie pages on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -136,9 +136,9 @@
       <label for="currency-name">Item Name</label>
       <input type="text" id="currency-name" placeholder="e.g Black Cat Plush">
       <label for="border-url">Border URL (PNG/MP4)</label>
-      <input type="text" id="border-url" placeholder="Enter background URL">
+      <input type="text" id="border-url" placeholder="Enter border URL">
       <label for="background-url">Background URL (PNG/MP4)</label>
-      <input type="text" id="background-url" placeholder="Enter border URL">
+      <input type="text" id="background-url" placeholder="Enter background URL">
       <div class="advanced-options">
         <label for="currency-namechange">Change Item Name</label>
         <input type="text" id="currency-namechange" placeholder="Enter New Item Name">
