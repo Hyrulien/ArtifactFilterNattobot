@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.6
+// @version      1.0.7
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -122,6 +122,7 @@ document.head.appendChild(style);
   panel.innerHTML = `
     <button class="close-btn">X</button>
     <button class="pin-btn">Pin</button>
+    <div id="artifact-counter" style="margin-top: 10px; font-size: 14px;">0/200</div>
     <h3>Filter Artifacts</h3>
     <label for="setType">Set Type:</label>
     <select id="setType">
@@ -179,10 +180,10 @@ document.head.appendChild(style);
     <label for="substats">Substats:</label>
     <select id="substats" multiple size="10">
       <option value="atk">Attack</option>
-      <option value="atkp">Attack_Percent</option>
+      <option value="atkp">Attack%</option>
       <option value="hp">HP</option>
-      <option value="hpp">HP_Percent</option>
-      <option value="dbl">DoubleDamageChance</option>
+      <option value="hpp">HP%</option>
+      <option value="dbl">DoubleDamage%</option>
       <option value="addchance">AdditionalRoundChance</option>
       <option value="crit">CritChance</option>
       <option value="critdmg">CritDamage</option>
@@ -254,15 +255,47 @@ document.head.appendChild(style);
     blacklion: [1, 2, 3, 4, 5, 6, 7, 8],
     holy: [9, 10, 11, 12, 13, 14, 15, 16]
   };
+// Artifact counting function
+function getArtifactCount() {
+    // Select all artifacts from the inventory
+    const artifacts = document.querySelectorAll('.inventory .item');
+    return artifacts; // Return the NodeList for further processing
+}
 
-  // Filter items based on user input
-  function filterItems({
+// Update the artifact count in the UI
+function updateArtifactCount() {
+    const artifacts = getArtifactCount(); // Get all artifacts
+    const maxArtifacts = 200;
+    const counterElement = document.getElementById('artifact-counter');
+    counterElement.textContent = `${artifacts.length}/${maxArtifacts}`; // Show total count
+}
+
+// Update artifact count when filters are applied
+const updateArtifactCountOnFilter = () => {
+    const artifacts = getArtifactCount(); // Get all artifacts
+    const maxArtifacts = 200;
+
+    // Filter artifacts that are currently displayed
+    const visibleArtifacts = Array.from(artifacts).filter(artifact => {
+        return window.getComputedStyle(artifact).display === 'block';
+    });
+
+    // Update the UI with the count of visible artifacts
+    document.getElementById('artifact-counter').textContent = `${visibleArtifacts.length}/${maxArtifacts}`;
+};
+
+// Initialize the artifact counter when the page is loaded
+window.addEventListener('load', updateArtifactCount);
+
+
+// Filter items based on user input
+function filterItems({
     slot = null,
     mainStatType = null,
     substats = [],
     setType = null,
     level = null
-  } = {}) {
+} = {}) {
     // Convert custom names to actual values
     slot = Object.keys(slotMappings).find(key => slotMappings[key] === slot) || slot;
     slot = bindings[slot] || slot;
@@ -277,39 +310,41 @@ document.head.appendChild(style);
 
     // Loop through each item and toggle visibility based on the data attributes
     items.forEach(function(item) {
-      var jsonData = JSON.parse(item.getAttribute('data-json'));
+        var jsonData = JSON.parse(item.getAttribute('data-json'));
 
-      var itemSlot = jsonData.Slot;
-      var itemMainStatType = jsonData.MainStatType;
-      var itemSubStats = jsonData.SubStats;
-      var itemArtifactID = jsonData.ArtifactID;
-      var itemLevel = jsonData.Level; // Assuming the level is included in the data-json
+        var itemSlot = jsonData.Slot;
+        var itemMainStatType = jsonData.MainStatType;
+        var itemSubStats = jsonData.SubStats;
+        var itemArtifactID = jsonData.ArtifactID;
+        var itemLevel = jsonData.Level; // Assuming the level is included in the data-json
 
-      var matchesSlot = slot === null || itemSlot == slot;
-      var matchesMainStatType = mainStatType === null || itemMainStatType == mainStatType;
+        var matchesSlot = slot === null || itemSlot == slot;
+        var matchesMainStatType = mainStatType === null || itemMainStatType == mainStatType;
 
-      // Ensure that all selected substats are present in the item's substats
-      var matchesSubstats = substats.length === 0 || substats.every(substat => itemSubStats.includes(substat));
+        // Ensure that all selected substats are present in the item's substats
+        var matchesSubstats = substats.length === 0 || substats.every(substat => itemSubStats.includes(substat));
 
-      // Check if the item matches the selected set's ArtifactID
-      var matchesSet = setArtifactIDs === null || setArtifactIDs.includes(itemArtifactID);
+        // Check if the item matches the selected set's ArtifactID
+        var matchesSet = setArtifactIDs === null || setArtifactIDs.includes(itemArtifactID);
 
-      // Check level filter
-      var matchesLevel = true;
-      if (level === 'below50') {
-        matchesLevel = itemLevel <= 50;
-      } else if (level === 'above50') {
-        matchesLevel = itemLevel > 50;
-      }
+        // Check level filter
+        var matchesLevel = true;
+        if (level === 'below50') {
+            matchesLevel = itemLevel <= 50;
+        } else if (level === 'above50') {
+            matchesLevel = itemLevel > 50;
+        }
 
-      if (matchesSlot && matchesMainStatType && matchesSubstats && matchesSet && matchesLevel) {
-        item.style.display = 'block'; // Show the item
-      } else {
-        item.style.display = 'none';  // Hide the item
-      }
+        if (matchesSlot && matchesMainStatType && matchesSubstats && matchesSet && matchesLevel) {
+            item.style.display = 'block'; // Show the item
+        } else {
+            item.style.display = 'none';  // Hide the item
+        }
     });
-  }
 
+    // Update the artifact count after filtering
+    updateArtifactCountOnFilter();
+}
   // Handle max 4 substats
   document.getElementById('substats').addEventListener('change', (e) => {
     const options = e.target.options;
@@ -339,6 +374,7 @@ document.head.appendChild(style);
       setType: setType || null,
       level: level || null
     });
+      updateArtifactCountOnFilter();
   });
 
   // Handle filter reset
@@ -422,7 +458,7 @@ document.head.appendChild(style);
   // Initialize pin button text
   updatePinButton();
 
-  // Load the UI and make it draggable if URL contains #artifacts
+  // Load the UI and make it draggable
   function loadUI() {
     if (checkURL()) {
       document.getElementById('filter-panel').style.display = '';
