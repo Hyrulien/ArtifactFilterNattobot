@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.7
+// @version      1.0.8
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -265,7 +265,7 @@ function getArtifactCount() {
 // Update the artifact count in the UI
 function updateArtifactCount() {
     const artifacts = getArtifactCount(); // Get all artifacts
-    const maxArtifacts = 200;
+    const maxArtifacts = 250;
     const counterElement = document.getElementById('artifact-counter');
     counterElement.textContent = `${artifacts.length}/${maxArtifacts}`; // Show total count
 }
@@ -273,7 +273,7 @@ function updateArtifactCount() {
 // Update artifact count when filters are applied
 const updateArtifactCountOnFilter = () => {
     const artifacts = getArtifactCount(); // Get all artifacts
-    const maxArtifacts = 200;
+    const maxArtifacts = 250;
 
     // Filter artifacts that are currently displayed
     const visibleArtifacts = Array.from(artifacts).filter(artifact => {
