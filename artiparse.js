@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.8
+// @version      1.0.9
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -97,7 +97,7 @@ style.textContent = `
     border-color: #1e88e5;
     outline: none;
   }
-  #apply-filters, #reset-filters {
+  #apply-filters, #reset-filters, #sort-substat-range {
     background-color: #f5f5f5;
     color: #37474f;
     font-weight: bold;
@@ -111,6 +111,10 @@ style.textContent = `
   #reset-filters:hover {
     background-color: #ff6b6b;
     color: white;
+  }
+  #sort-substat-range:hover {
+  background-color: #ff6b6b;
+  color: white;
   }
 `;
 document.head.appendChild(style);
@@ -206,6 +210,9 @@ document.head.appendChild(style);
     </select>
     <button id="apply-filters">Apply Filters</button>
     <button id="reset-filters">Reset Filters</button>
+    <button id="sort-substat-range">Sort by Highest Substat Range</button>
+    <input type="checkbox" id="sort-by-level" />
+
   `;
   document.body.appendChild(panel);
 
@@ -287,6 +294,68 @@ const updateArtifactCountOnFilter = () => {
 // Initialize the artifact counter when the page is loaded
 window.addEventListener('load', updateArtifactCount);
 
+// Sorting button functionality
+let isSortedDescending = true;
+
+const sortButton = document.getElementById('sort-substat-range'); // Now part of the added HTML
+const sortByLevelCheckbox = document.getElementById('sort-by-level'); // Checkbox to enable sorting by level
+
+sortButton.addEventListener('click', () => {
+    const selectedSubstat = document.getElementById('substats').value; // Get the selected substat from the dropdown
+
+    if (!selectedSubstat) {
+        alert("Please select a substat to sort by.");
+        return;
+    }
+
+    const substatByteValue = bindings[selectedSubstat]; // Mapping selected substat to its byte value
+
+    const items = Array.from(document.querySelectorAll('.inventory .item'));
+
+    // Extract relevant data from each artifact
+    const artifactData = items.map(item => {
+        const jsonData = JSON.parse(item.getAttribute('data-json'));
+        const subStats = jsonData.SubStats;        // Substat types
+        const subStatRanges = jsonData.SubStatRanges; // Corresponding substat ranges
+        const level = jsonData.Level;              // Artifact level
+
+        // Find the index of the selected substat in the SubStats array
+        const substatIndex = subStats.indexOf(substatByteValue);
+        const substatRange = substatIndex !== -1 ? subStatRanges[substatIndex] : null;
+
+        return {
+            element: item,
+            substatRange: substatRange, // Save the substat range for sorting
+            level: level                // Save the level for sorting by level
+        };
+    });
+
+    // Sort artifacts based on substat range and, if checkbox is checked, by level
+    artifactData.sort((a, b) => {
+        // If sorting by substat range and level is checked
+        if (a.substatRange === null) return 1; // If A doesn't have the substat, place it after B
+        if (b.substatRange === null) return -1; // If B doesn't have the substat, place it after A
+
+        let comparisonResult = isSortedDescending ? b.substatRange - a.substatRange : a.substatRange - b.substatRange;
+
+        // If substat ranges are equal or sorting by level is enabled, compare by level
+        if (comparisonResult === 0 || sortByLevelCheckbox.checked) {
+            comparisonResult = isSortedDescending ? b.level - a.level : a.level - b.level;
+        }
+
+        return comparisonResult;
+    });
+
+    // Toggle sorting order
+    isSortedDescending = !isSortedDescending;
+    sortButton.textContent = isSortedDescending ? 'Sort by Highest Substat Range' : 'Sort by Lowest Substat Range';
+
+    // Reorder the artifacts in the DOM
+    const inventoryContainer = document.querySelector('.inventory');
+    artifactData.forEach(data => {
+        inventoryContainer.appendChild(data.element);
+    });
+});
 
 // Filter items based on user input
 function filterItems({
