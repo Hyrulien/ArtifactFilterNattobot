@@ -1,0 +1,242 @@
+// ==UserScript==
+// @name         Nattobot Card Counter
+// @namespace    http://tampermonkey.net/
+// @version      1.0.0
+// @description  Count cards, including extra amounts, display card names, and add a draggable UI with an element filter for cards on the #cards page of nattobot.com
+// @author       Hyrulien
+// @match        https://nattobot.com/inventory/*
+// @grant        none
+// @updateURL    https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
+// @downloadURL  https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Global variable to hold counter display
+    let counterDisplay;
+
+    // Mapping of star images to card values
+    function getCardValue(starSrc) {
+        switch (starSrc) {
+            case 'https://nattobot.com/content/stars_5.png':
+                return 6;
+            case 'https://nattobot.com/content/stars_4.png':
+                return 5;
+            case 'https://nattobot.com/content/stars_3.png':
+                return 4;
+            case 'https://nattobot.com/content/stars_2.png':
+                return 3;
+            case 'https://nattobot.com/content/stars_1.png':
+                return 2;
+            case 'https://nattobot.com/content/stars_0.png':
+                return 1;
+            default:
+                return 0;
+        }
+    }
+
+    // Mapping of data-element to letters
+    const elementMap = {
+        '0': { letter: 'neutral', img: 'https://nattobot.com/content/noelement.png?r=1' }, // Neutral
+        '1': { letter: 'light', img: 'https://nattobot.com/content/light.png?r=1' }, // Light
+        '2': { letter: 'dark', img: 'https://nattobot.com/content/dark.png?r=1' }, // Dark
+        '3': { letter: 'fire', img: 'https://nattobot.com/content/fire.png?r=1' }, // Fire
+        '4': { letter: 'water', img: 'https://nattobot.com/content/water.png?r=1' }, // Water
+        '5': { letter: 'wind', img: 'https://nattobot.com/content/wind.png?r=1' }, // Wind
+        '6': { letter: 'lightning', img: 'https://nattobot.com/content/lightning.png?r=1' }, // Lightning
+        '7': { letter: 'earth', img: 'https://nattobot.com/content/earth.png?r=1' }, // Earth
+        '8': { letter: 'energy', img: 'https://nattobot.com/content/energy.png?r=1' }  // Energy
+    };
+
+    // Function to get the extra amount of cards
+    function getExtraAmount(card) {
+        const extraAmountDiv = card.querySelector('.card_topleft strong');
+        if (extraAmountDiv) {
+            const extraText = extraAmountDiv.textContent.match(/Extra Amount:\s*(\d+)/);
+            return extraText ? parseInt(extraText[1], 10) : 0;
+        }
+        return 0;
+    }
+
+    // Function to count the cards with an optional element filter and display names
+    function countCards(elementFilter = null) {
+        const cardsContainer = document.querySelector('#cards');
+        if (!cardsContainer) return;
+
+        let totalCards = 0;
+        let cardDetails = [];
+
+        // Find all card divs
+        const cards = cardsContainer.querySelectorAll('.card');
+        cards.forEach(card => {
+            const starImage = card.querySelector('img.advancementstarsbottom');
+            const cardElement = card.getAttribute('data-element');
+            const cardName = card.querySelector('h4')?.textContent || 'Unknown Card';
+            const extraAmount = getExtraAmount(card);
+
+            if (starImage && (!elementFilter || elementMap[cardElement].letter === elementFilter)) {
+                const cardValue = getCardValue(starImage.src);
+                const totalCardValue = cardValue + extraAmount;
+                totalCards += totalCardValue;
+
+                // Only add card details when a filter is applied
+                if (elementFilter) {
+                    cardDetails.push({ name: cardName, count: totalCardValue });
+                }
+            }
+        });
+
+        console.log(`Total cards: ${totalCards}`);
+
+        // Display the result on the page
+        if (!counterDisplay) {
+            counterDisplay = document.createElement('div');
+            counterDisplay.id = 'card-counter';
+            counterDisplay.style.position = 'fixed';
+            counterDisplay.style.top = '10px';
+            counterDisplay.style.left = '10px';
+            counterDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            counterDisplay.style.color = 'white';
+            counterDisplay.style.padding = '20px';
+            counterDisplay.style.borderRadius = '10px';
+            counterDisplay.style.zIndex = '1000';
+            counterDisplay.style.maxHeight = '500px';
+            counterDisplay.style.overflowY = 'auto';
+            counterDisplay.style.fontFamily = 'Arial, sans-serif';
+            counterDisplay.style.boxShadow = '0px 0px 15px rgba(0, 0, 0, 0.5)';
+            document.body.appendChild(counterDisplay);
+
+            // Restore position from localStorage
+            restorePosition(counterDisplay);
+
+            // Make UI draggable
+            makeDraggable(counterDisplay);
+        }
+
+        // Create the content to display
+        let displayContent = `<h2 style="margin: 0 0 10px;">Total cards${elementFilter ? ` (${elementFilter.toUpperCase()})` : ''}: ${totalCards}</h2>`;
+
+        // If an element filter is applied, list the card names and counts
+        if (elementFilter) {
+            cardDetails.forEach(card => {
+                displayContent += `<div style="margin-bottom: 10px;">
+                    <strong>${card.name}</strong>: ${card.count} card(s)
+                </div>`;
+            });
+        }
+
+        counterDisplay.innerHTML = displayContent;
+
+        // Create element filter buttons
+        let filterButtonsContainer = document.querySelector('#filter-buttons');
+        if (!filterButtonsContainer) {
+            filterButtonsContainer = document.createElement('div');
+            filterButtonsContainer.id = 'filter-buttons';
+            counterDisplay.insertBefore(filterButtonsContainer, counterDisplay.firstChild);
+
+            Object.entries(elementMap).forEach(([key, value]) => {
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.display = 'inline-block'; // Arrange buttons inline
+                buttonContainer.style.cursor = 'pointer'; // Indicate that it's clickable
+
+                const button = document.createElement('img');
+                button.src = value.img;
+                button.style.marginLeft = '2px';
+                button.style.borderColor = 'rgb(211, 211, 211)';
+                button.style.width = '30px'; // Set button width
+                button.style.height = '30px'; // Set button height
+                button.alt = value.letter.toUpperCase();
+                button.title = `Filter by ${value.letter.toUpperCase()}`;
+
+                // Click event for the button container
+                buttonContainer.appendChild(button);
+                buttonContainer.addEventListener('click', () => countCards(value.letter)); // Click event to filter
+
+                filterButtonsContainer.appendChild(buttonContainer);
+            });
+
+            // Reset button to show all cards
+            const resetButtonContainer = document.createElement('div');
+            resetButtonContainer.style.display = 'inline-block'; // Arrange inline
+            resetButtonContainer.style.cursor = 'pointer'; // Indicate that it's clickable
+
+            const resetButton = document.createElement('img');
+            resetButton.src = 'https://i.imgur.com/RkGdotx.png'; // Reset button PNG
+            resetButton.style.marginLeft = '2px';
+            resetButton.style.borderColor = 'rgb(211, 211, 211)';
+            resetButton.style.width = '30px'; // Set button width
+            resetButton.style.height = '30px'; // Set button height
+            resetButton.alt = 'Reset';
+            resetButton.title = 'Show all cards';
+
+            // Click event for the reset button
+            resetButtonContainer.appendChild(resetButton);
+            resetButtonContainer.addEventListener('click', () => countCards()); // Click event to reset filter
+
+            filterButtonsContainer.appendChild(resetButtonContainer);
+        }
+    }
+
+    // Check if the current URL is for the #cards page
+    function checkURL() {
+        if (window.location.hash.endsWith('#cards')) {
+            countCards(); // Load the card counting UI
+        } else {
+            if (counterDisplay) {
+                counterDisplay.style.display = 'none'; // Hide the UI if not on #cards page
+            } else {
+                // If counterDisplay doesn't exist, just return
+                return;
+            }
+        }
+    }
+
+    // Make the UI draggable
+    function makeDraggable(element) {
+        let offsetX = 0, offsetY = 0, initialX = 0, initialY = 0;
+
+        element.onmousedown = function(e) {
+            e.preventDefault();
+            initialX = e.clientX;
+            initialY = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        };
+
+        function elementDrag(e) {
+            e.preventDefault();
+            offsetX = initialX - e.clientX;
+            offsetY = initialY - e.clientY;
+            initialX = e.clientX;
+            initialY = e.clientY;
+            element.style.top = (element.offsetTop - offsetY) + "px";
+            element.style.left = (element.offsetLeft - offsetX) + "px";
+            // Save position to localStorage
+            localStorage.setItem('counterDisplayPosition', JSON.stringify({
+                top: element.offsetTop,
+                left: element.offsetLeft
+            }));
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    // Restore position from localStorage
+    function restorePosition(element) {
+        const position = JSON.parse(localStorage.getItem('counterDisplayPosition'));
+        if (position) {
+            element.style.top = position.top + 'px';
+            element.style.left = position.left + 'px';
+        }
+    }
+
+    // Listen for hash changes to check URL
+    window.addEventListener('hashchange', checkURL);
+
+    // Initial count and setup
+    checkURL();
+})();
