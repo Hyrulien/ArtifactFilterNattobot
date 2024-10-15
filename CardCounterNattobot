@@ -6,8 +6,8 @@
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
-// @downloadURL  https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/main/artiparse.js
+// @updateURL    https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/refs/heads/main/CardCounterNattobot
+// @downloadURL  https://raw.githubusercontent.com/Hyrulien/ArtifactFilterNattobot/refs/heads/main/CardCounterNattobot
 // ==/UserScript==
 
 (function() {
