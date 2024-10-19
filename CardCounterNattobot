@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nattobot Card Counter
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Count cards, including extra amounts, display card names, and add a draggable UI with an element filter for cards on the #cards page of nattobot.com
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -19,17 +19,17 @@
     // Mapping of star images to card values
     function getCardValue(starSrc) {
         switch (starSrc) {
-            case 'https://nattobot.com/content/stars_5.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_5.png':
                 return 6;
-            case 'https://nattobot.com/content/stars_4.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_4.png':
                 return 5;
-            case 'https://nattobot.com/content/stars_3.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_3.png':
                 return 4;
-            case 'https://nattobot.com/content/stars_2.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_2.png':
                 return 3;
-            case 'https://nattobot.com/content/stars_1.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_1.png':
                 return 2;
-            case 'https://nattobot.com/content/stars_0.png':
+            case 'https://static.kg.sayless.eu/essentials/stars_0.png':
                 return 1;
             default:
                 return 0;
@@ -38,15 +38,15 @@
 
     // Mapping of data-element to letters
     const elementMap = {
-        '0': { letter: 'neutral', img: 'https://nattobot.com/content/noelement.png?r=1' }, // Neutral
-        '1': { letter: 'light', img: 'https://nattobot.com/content/light.png?r=1' }, // Light
-        '2': { letter: 'dark', img: 'https://nattobot.com/content/dark.png?r=1' }, // Dark
-        '3': { letter: 'fire', img: 'https://nattobot.com/content/fire.png?r=1' }, // Fire
-        '4': { letter: 'water', img: 'https://nattobot.com/content/water.png?r=1' }, // Water
-        '5': { letter: 'wind', img: 'https://nattobot.com/content/wind.png?r=1' }, // Wind
-        '6': { letter: 'lightning', img: 'https://nattobot.com/content/lightning.png?r=1' }, // Lightning
-        '7': { letter: 'earth', img: 'https://nattobot.com/content/earth.png?r=1' }, // Earth
-        '8': { letter: 'energy', img: 'https://nattobot.com/content/energy.png?r=1' }  // Energy
+        '0': { letter: 'neutral', img: 'https://static.kg.sayless.eu/essentials/noelement.png?r=1' }, // Neutral
+        '1': { letter: 'light', img: 'https://static.kg.sayless.eu/essentials/light.png?r=1' }, // Light
+        '2': { letter: 'dark', img: 'https://static.kg.sayless.eu/essentials/dark.png?r=1' }, // Dark
+        '3': { letter: 'fire', img: 'https://static.kg.sayless.eu/essentials/fire.png?r=1' }, // Fire
+        '4': { letter: 'water', img: 'https://static.kg.sayless.eu/essentials/water.png?r=1' }, // Water
+        '5': { letter: 'wind', img: 'https://static.kg.sayless.eu/essentials/wind.png?r=1' }, // Wind
+        '6': { letter: 'lightning', img: 'https://static.kg.sayless.eu/essentials/lightning.png?r=1' }, // Lightning
+        '7': { letter: 'earth', img: 'https://static.kg.sayless.eu/essentials/earth.png?r=1' }, // Earth
+        '8': { letter: 'energy', img: 'https://static.kg.sayless.eu/essentials/energy.png?r=1' }  // Energy
     };
 
     // Function to get the extra amount of cards
