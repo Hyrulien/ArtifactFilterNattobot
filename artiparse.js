@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Inventory Filter Injector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.9
+// @version      1.1.0
 // @description  Injects a custom filter UI into the inventory page on Nattobot
 // @author       Hyrulien
 // @match        https://nattobot.com/inventory/*
@@ -132,6 +132,7 @@ document.head.appendChild(style);
     <select id="setType">
       <option value="">Any</option>
       <option value="power">Power Set</option>
+      <option value="shadow">Shadow Flame Set</option>
       <option value="blacklion">Black Lion Set</option>
       <option value="holy">Holy Set</option>
     </select>
@@ -260,7 +261,8 @@ document.head.appendChild(style);
   const setMappings = {
     power: [17, 18, 19, 20, 21, 22, 23, 24],
     blacklion: [1, 2, 3, 4, 5, 6, 7, 8],
-    holy: [9, 10, 11, 12, 13, 14, 15, 16]
+    holy: [9, 10, 11, 12, 13, 14, 15, 16],
+    shadow: [30, 31, 32, 33, 34, 35, 36, 37]
   };
 // Artifact counting function
 function getArtifactCount() {
@@ -543,3 +545,4 @@ function filterItems({
   // Reload UI when hash changes
   window.addEventListener('hashchange', loadUI);
 })();
+
